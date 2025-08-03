@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, User, Bot, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
+
+
+
 interface Message {
   id: string;
   text: string;
@@ -90,7 +93,7 @@ const ChatInterface: React.FC = () => {
       // Determine if this should be a claim evaluation or general chat
       if (isClaimQuery(queryText)) {
         messageType = 'claim';
-        response = await axios.post<ClaimApiResponse>('http://localhost:3001/api/evaluate-claim', {
+        response = await axios.post<ClaimApiResponse>(`${import.meta.env.VITE_BACKEND_URL}/api/evaluate-claim`, {
           customQuery: queryText
         }, {
           headers: {
@@ -99,7 +102,7 @@ const ChatInterface: React.FC = () => {
           timeout: 30000,
         });
       } else {
-        response = await axios.post<ChatApiResponse>('http://localhost:3001/api/chat', {
+        response = await axios.post<ChatApiResponse>(`${import.meta.env.VITE_BACKEND_URL}/api/chat`, {
           message: queryText
         }, {
           headers: {
@@ -172,6 +175,27 @@ const ChatInterface: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  const [backendHealth, setBackendHealth] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+
+    useEffect(() => {
+      const checkBackendHealth = async () => {
+        try {
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/health`, {
+            timeout: 5000,
+          });
+          setBackendHealth(response.status === 200 ? 'connected' : 'disconnected');
+        } catch (error) {
+          setBackendHealth('disconnected');
+        }
+      };
+
+      checkBackendHealth();
+      const interval = setInterval(checkBackendHealth, 30000); // Check every 30 seconds
+
+      return () => clearInterval(interval);
+    }, []);
+
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden" style={{
@@ -408,7 +432,7 @@ const ChatInterface: React.FC = () => {
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Ask about policy coverage or enter claim details (e.g., '46M, knee surgery, Pune, 3-month policy')..."
+            placeholder="Ask about policy coverage or enter claim details."
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
             disabled={isLoading}
             style={{
@@ -448,31 +472,29 @@ const ChatInterface: React.FC = () => {
           </button>
         </form>
         <div className="mt-2 space-y-1">
-          <p className="text-xs text-gray-500" style={{
-            fontSize: '0.625rem',
-            color: '#94a3b8'
-          }}>
-            💡 <strong>Examples:</strong>
-          </p>
-          <p className="text-xs text-gray-400" style={{
-            fontSize: '0.625rem',
-            color: '#6b7280'
-          }}>
-            • "What is covered under the Easy Health Policy?"
-          </p>
-          <p className="text-xs text-gray-400" style={{
-            fontSize: '0.625rem',
-            color: '#6b7280'
-          }}>
-            • "46M, knee surgery, Pune, 3-month policy" (for claim evaluation)
-          </p>
-          <p className="text-xs text-green-500 mt-1" style={{
-            fontSize: '0.625rem',
-            color: '#22c55e',
-            marginTop: '0.25rem'
-          }}>
-            🟢 Connected to RAG Backend (localhost:3001)
-          </p>
+
+          
+    
+  
+      <p className={`text-xs mt-1 ${
+        backendHealth === 'connected' 
+          ? 'text-green-500' 
+          : backendHealth === 'disconnected' 
+          ? 'text-red-500' 
+          : 'text-yellow-500'
+      }`} style={{
+        fontSize: '0.625rem',
+        color: backendHealth === 'connected' 
+          ? '#22c55e' 
+          : backendHealth === 'disconnected' 
+          ? '#ef4444' 
+          : '#eab308',
+        marginTop: '0.25rem'
+      }}>
+        {backendHealth === 'connected' && '🟢 Connected to RAG Backend'}
+        {backendHealth === 'disconnected' && '🔴 Disconnected from RAG Backend'}
+        {backendHealth === 'checking' && '🟡 Checking RAG Backend connection...'}
+      </p>
         </div>
       </div>
     </div>
