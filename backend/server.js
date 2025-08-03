@@ -13,10 +13,13 @@ dotenv.config({ path: join(__dirname, '.env') });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+console.log(process.env.FRONTEND_URL)
+
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'], // Add your frontend URLs
-  credentials: true
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173', process.env.FRONTEND_URL], // Add your frontend URLs
+  credentials: true,
+  httpsOnly: true // Enforce HTTPS for production
 }));
 app.use(express.json());
 
@@ -217,14 +220,6 @@ app.use('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 RAG Backend Server is running on http://localhost:${PORT}`);
-  console.log(`📚 Available endpoints:`);
-  console.log(`   GET  /health - Health check`);
-  console.log(`   GET  /api/status - Environment status`);
-  console.log(`   POST /api/chat - General chat with RAG`);
-  console.log(`   POST /api/evaluate-claim - Insurance claim evaluation`);
-  console.log(`\n🔧 Make sure your .env file contains:`);
-  console.log(`   GEMINI_API_KEY=your_gemini_api_key`);
-  console.log(`   PINECONE_API_KEY=your_pinecone_api_key`);
-  console.log(`   PINECONE_INDEX_NAME=your_index_name`);
+  console.log(` Backend Server is running on http://localhost:${PORT}`);
+ 
 });
