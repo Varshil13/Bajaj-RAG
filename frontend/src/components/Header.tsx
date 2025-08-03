@@ -1,5 +1,5 @@
 import React from "react";
-import { Brain, MessageCircle } from "lucide-react";
+import { Brain } from "lucide-react";
 
 const Header: React.FC = () => {
   return (
