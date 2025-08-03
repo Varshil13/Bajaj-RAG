@@ -118,13 +118,3 @@ Be concise, factual, and avoid speculation.
     throw error;
   }
 }
-
-// async function main() {
-//   while (true) {
-//     const userProblem = readlineSync.question("Ask me anything--> ");
-//     if (!userProblem) break;
-//     await chatting(userProblem);
-//   }
-// }
-
-// main();
