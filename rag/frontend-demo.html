@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Insurance Claim System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #4f46e5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #4f46e5;
+            padding-bottom: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+        
+        button {
+            background: #4f46e5;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background: #3730a3;
+        }
+        
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .response {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .response.success {
+            background: #dcfce7;
+            border: 1px solid #16a34a;
+            color: #15803d;
+        }
+        
+        .response.error {
+            background: #fef2f2;
+            border: 1px solid #dc2626;
+            color: #dc2626;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        
+        .claim-result {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .claim-decision {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .claim-decision.approved {
+            color: #16a34a;
+        }
+        
+        .claim-decision.rejected {
+            color: #dc2626;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #4f46e5;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Insurance Claim Evaluation System</h1>
+            <p>RAG-powered claim processing and general insurance queries</p>
+        </div>
+        
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('claim')">Claim Evaluation</button>
+                <button class="tab" onclick="switchTab('chat')">General Chat</button>
+            </div>
+            
+            <!-- Claim Evaluation Tab -->
+            <div id="claim-tab" class="tab-content active">
+                <div class="section">
+                    <h3>Insurance Claim Details</h3>
+                    <form id="claimForm">
+                        <div class="form-group">
+                            <label for="age">Age:</label>
+                            <input type="text" id="age" name="age" placeholder="e.g., 46" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gender">Gender:</label>
+                            <select id="gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="procedure">Medical Procedure:</label>
+                            <input type="text" id="procedure" name="procedure" placeholder="e.g., knee surgery" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="location">Location:</label>
+                            <input type="text" id="location" name="location" placeholder="e.g., Pune">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="policyDuration">Policy Duration:</label>
+                            <input type="text" id="policyDuration" name="policyDuration" placeholder="e.g., 3-month">
+                        </div>
+                        
+                        <button type="submit" id="claimBtn">Evaluate Claim</button>
+                    </form>
+                </div>
+                
+                <div id="claimResponse" class="response">
+                    <div id="claimContent"></div>
+                </div>
+            </div>
+            
+            <!-- General Chat Tab -->
+            <div id="chat-tab" class="tab-content">
+                <div class="section">
+                    <h3>General Insurance Questions</h3>
+                    <form id="chatForm">
+                        <div class="form-group">
+                            <label for="message">Your Question:</label>
+                            <textarea id="message" name="message" rows="4" placeholder="Ask anything about the insurance policy..." required></textarea>
+                        </div>
+                        
+                        <button type="submit" id="chatBtn">Ask Question</button>
+                    </form>
+                </div>
+                
+                <div id="chatResponse" class="response">
+                    <div id="chatContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+        // Claim evaluation form
+        document.getElementById('claimForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const claimData = Object.fromEntries(formData.entries());
+            
+            const responseDiv = document.getElementById('claimResponse');
+            const contentDiv = document.getElementById('claimContent');
+            const button = document.getElementById('claimBtn');
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Evaluating...';
+            responseDiv.style.display = 'block';
+            responseDiv.className = 'response';
+            contentDiv.innerHTML = '<div class="loading">🔄 Evaluating your claim...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/evaluate-claim`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(claimData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    responseDiv.className = 'response success';
+                    
+                    const result = data.result;
+                    const decisionClass = result.Decision?.toLowerCase() === 'approved' ? 'approved' : 'rejected';
+                    
+                    contentDiv.innerHTML = `
+                        <div class="claim-result">
+                            <div class="claim-decision ${decisionClass}">
+                                Decision: ${result.Decision || 'Unknown'}
+                            </div>
+                            ${result.Amount ? `<p><strong>Amount:</strong> ₹${result.Amount.toLocaleString()}</p>` : ''}
+                            <p><strong>Justification:</strong></p>
+                            <p>${result.Justification || data.raw_response}</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                responseDiv.className = 'response error';
+                contentDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Evaluate Claim';
+            }
+        });
+        
+        // Chat form
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const message = formData.get('message');
+            
+            const responseDiv = document.getElementById('chatResponse');
+            const contentDiv = document.getElementById('chatContent');
+            const button = document.getElementById('chatBtn');
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Processing...';
+            responseDiv.style.display = 'block';
+            responseDiv.className = 'response';
+            contentDiv.innerHTML = '<div class="loading">🤔 Thinking...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    responseDiv.className = 'response success';
+                    contentDiv.innerHTML = `
+                        <p><strong>Answer:</strong></p>
+                        <p>${data.answer}</p>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                responseDiv.className = 'response error';
+                contentDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Ask Question';
+            }
+        });
+        
+        // Check server status on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (!response.ok) throw new Error('Server not responding');
+                console.log('✅ Backend server is running');
+            } catch (error) {
+                console.error('❌ Backend server is not accessible:', error);
+                alert('⚠️ Backend server is not running. Please start it with: node server.js');
+            }
+        });
+    </script>
+</body>
+</html>
