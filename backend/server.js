@@ -100,7 +100,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // Insurance claim evaluation endpoint
-app.post('/api/evaluate-claim', async (req, res) => {
+app.post('/api/v1/hackrx/run', async (req, res) => {
   try {
     const { 
       age, 
